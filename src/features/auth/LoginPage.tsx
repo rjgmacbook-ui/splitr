@@ -46,7 +46,8 @@ export function LoginPage() {
   const { signInWithEmail, signUpWithEmail } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: string } | null)?.from ?? '/'
+  const searchParams = new URLSearchParams(location.search)
+  const from = searchParams.get('redirect') ?? (location.state as { from?: string } | null)?.from ?? '/'
 
   function switchMode(next: Mode) {
     setMode(next)

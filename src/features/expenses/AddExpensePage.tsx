@@ -21,6 +21,8 @@ import { Avatar } from '@/components/Avatar'
 import { SplitBar } from '@/components/SplitBar'
 import type { CreateExpensePayload } from '@/types/database'
 
+const EMPTY_MEMBERS: never[] = []
+
 type SplitMethod = 'equal' | 'exact' | 'percent' | 'shares' | 'adjust'
 
 const METHODS: { key: SplitMethod; label: string }[] = [
@@ -50,12 +52,16 @@ export function AddExpensePage() {
     }
   }, [userGroups, groupId])
 
-  const { data: groupMembers = [] } = useGroupMembers(groupId || undefined)
+  const { data: groupMembers = EMPTY_MEMBERS } = useGroupMembers(groupId || undefined)
 
   // Form state
   const [description, setDescription] = useState('')
   const [amountStr, setAmountStr] = useState('')
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(() => {
+    const now = new Date()
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+    return now.toISOString().slice(0, 16)
+  })
   const [category, setCategory] = useState('general')
   const [notes, setNotes] = useState('')
   const [showNotes, setShowNotes] = useState(false)
@@ -316,8 +322,8 @@ export function AddExpensePage() {
         />
 
         {/* Amount hero input */}
-        <div className="flex items-baseline gap-2 px-1 py-3">
-          <span className="text-2xl text-ink-secondary/60 font-display select-none">
+        <div className="flex items-baseline gap-2 bg-bg border border-border rounded-md px-3 py-2.5 transition-colors">
+          <span className="text-2xl text-ink-secondary/60 font-display select-none shrink-0">
             ₹
           </span>
           <input
@@ -326,14 +332,14 @@ export function AddExpensePage() {
             placeholder="0.00"
             value={amountStr}
             onChange={(e) => handleAmountInput(e.target.value)}
-            className="flex-1 bg-transparent text-[36px] leading-tight font-display font-semibold
-                       text-ink placeholder:text-ink-secondary/25 outline-none money caret-primary"
+            className="flex-1 min-w-0 bg-transparent text-[36px] leading-tight font-display font-semibold
+                       text-ink placeholder:text-ink-secondary/25 outline-none focus:outline-none money caret-primary"
             autoComplete="off"
           />
         </div>
 
         <input
-          type="date"
+          type="datetime-local"
           value={date}
           onChange={(e) => setDate(e.target.value)}
           className="bg-bg border border-border rounded-md px-3 py-2.5 text-ink text-[15px]

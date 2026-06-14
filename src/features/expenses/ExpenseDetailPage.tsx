@@ -6,12 +6,19 @@ import { getCategoryIcon, CATEGORIES } from '@/lib/categories'
 import { Avatar } from '@/components/Avatar'
 import { SplitBar } from '@/components/SplitBar'
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-IN', {
+function formatDateTime(dateStr: string) {
+  const d = new Date(dateStr)
+  const date = d.toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   })
+  const time = d.toLocaleTimeString('en-IN', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+  return { date, time }
 }
 
 export function ExpenseDetailPage() {
@@ -114,7 +121,11 @@ export function ExpenseDetailPage() {
             <h2 className="font-display text-lg font-semibold text-ink leading-snug">
               {expense.description}
             </h2>
-            <p className="text-sm text-ink-secondary mt-0.5">{formatDate(expense.expense_date)}</p>
+            <p className="text-sm text-ink-secondary mt-0.5">
+              {formatDateTime(expense.expense_date).date}
+              <span className="mx-1.5 opacity-40">·</span>
+              {formatDateTime(expense.expense_date).time}
+            </p>
           </div>
         </div>
 

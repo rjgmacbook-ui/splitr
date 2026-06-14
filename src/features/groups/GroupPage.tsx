@@ -10,9 +10,21 @@ import { formatMoneyAbs, formatMinorToDecimal } from '@/lib/money'
 import { getCategoryIcon, CATEGORIES } from '@/lib/categories'
 import type { Profile } from '@/types/database'
 
+function toDateKey(dateStr: string): string {
+  return new Date(dateStr).toISOString().slice(0, 10)
+}
+
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00')
+  const d = new Date(dateStr)
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function formatTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleTimeString('en-IN', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
 }
 
 export function GroupPage() {
@@ -66,9 +78,10 @@ export function GroupPage() {
   const dateGroups = useMemo(() => {
     const map = new Map<string, typeof expenses>()
     for (const exp of expenses) {
-      const existing = map.get(exp.expense_date)
+      const key = toDateKey(exp.expense_date)
+      const existing = map.get(key)
       if (existing) existing.push(exp)
-      else map.set(exp.expense_date, [exp])
+      else map.set(key, [exp])
     }
     return map
   }, [expenses])
@@ -361,6 +374,7 @@ export function GroupPage() {
                                   {payeeName === getProfileName(userId) ? 'you' : payeeName}
                                 </span>
                               </p>
+                              <p className="text-[11px] text-ink-secondary/60 mt-0.5">{formatTime(exp.expense_date)}</p>
                             </div>
                             <span className="text-positive font-semibold text-sm money shrink-0">
                               {formatMoneyAbs(exp.amount_minor)}
@@ -399,7 +413,11 @@ export function GroupPage() {
                                 {formatMoneyAbs(exp.amount_minor)}
                               </span>
                             </div>
-                            <p className="text-xs text-ink-secondary mt-0.5">{payerNames} paid</p>
+                            <p className="text-xs text-ink-secondary mt-0.5">
+                              {payerNames} paid
+                              <span className="mx-1 opacity-40">·</span>
+                              {formatTime(exp.expense_date)}
+                            </p>
                           </div>
                         </div>
                         <div className="mt-2.5 ml-7">
