@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ── Tailwind v4 theme: define tokens directly ── */
+@theme {
+  /* Brand */
+  --color-primary: #6C5CE7;
+  --color-primary-hover: #5A4BD1;
+  --color-on-primary: #F2EFFE;
+  --color-positive: #1D9E75;
+  --color-negative: #E2574C;
+
+  /* Surfaces */
+  --color-bg: #FAF9F6;
+  --color-surface: #FFFFFF;
+  --color-ink: #221E33;
+  --color-ink-secondary: #6B6580;
+  --color-border: #E8E5DE;
+
+  /* Person colors */
+  --color-person-0: #7C6CF0;
+  --color-person-1: #2BB58C;
+  --color-person-2: #F2785C;
+  --color-person-3: #E25C8E;
+  --color-person-4: #EFA72F;
+  --color-person-5: #4D8FE0;
+  --color-person-6: #86B440;
+  --color-person-7: #9A5CC9;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-card: 16px;
+  --radius-sheet: 20px;
+  --radius-pill: 9999px;
+
+  /* Font families */
+  --font-display: 'Fredoka', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+/* ── Dark mode: override the theme variables ── */
+[data-theme="dark"] {
+  --color-primary-hover: #7D6FF0;
+  --color-positive: #5DCAA5;
+  --color-negative: #F0997B;
+  --color-bg: #17141F;
+  --color-surface: #211D2E;
+  --color-ink: #F1EFF7;
+  --color-ink-secondary: #A09AAF;
+  --color-border: #37324A;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    --color-primary-hover: #7D6FF0;
+    --color-positive: #5DCAA5;
+    --color-negative: #F0997B;
+    --color-bg: #17141F;
+    --color-surface: #211D2E;
+    --color-ink: #F1EFF7;
+    --color-ink-secondary: #A09AAF;
+    --color-border: #37324A;
+    color-scheme: dark;
+  }
+}
+
+/* ── Base styles ── */
+html {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  min-height: 100dvh;
+}
+
+/* Tabular nums for monetary values */
+.money {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Shared animation */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
