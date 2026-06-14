@@ -53,7 +53,7 @@ export function SettlePage() {
 
   async function handleRecord() {
     if (selectedIdx === null || !id) return
-    const t = transfers[selectedIdx]
+    const t = transfers[selectedIdx]!
     await recordPayment.mutateAsync({
       group_id: id,
       from_user_id: t.from,

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
-import { useGroups, useGroupMembers, useAllMembers } from '@/hooks/useGroups'
+import { useGroups, useGroupMembers } from '@/hooks/useGroups'
 import { useCreateExpense } from '@/hooks/useExpenses'
 import {
   parseRupeesToMinor,
@@ -46,7 +46,7 @@ export function AddExpensePage() {
 
   useEffect(() => {
     if (!groupId && userGroups.length > 0) {
-      setGroupId(userGroups[0].id)
+      setGroupId(userGroups[0]!.id)
     }
   }, [userGroups, groupId])
 

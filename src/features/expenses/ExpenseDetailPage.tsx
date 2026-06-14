@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/hooks/useAuth'
 import { useExpense, useProfiles, useDeleteExpense } from '@/hooks/useExpenses'
 import { formatMoneyAbs } from '@/lib/money'
 import { getCategoryIcon, CATEGORIES } from '@/lib/categories'
@@ -18,7 +17,6 @@ function formatDate(dateStr: string) {
 export function ExpenseDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const { data: expense, isLoading } = useExpense(id)

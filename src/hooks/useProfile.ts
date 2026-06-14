@@ -14,7 +14,7 @@ export function useProfile(userId: string | undefined) {
         .eq('id', userId)
         .single()
       if (error) throw error
-      return data as unknown as Profile
+      return data as Profile
     },
     enabled: !!userId,
   })
@@ -32,8 +32,8 @@ export function useUpdateProfile() {
       default_currency?: string
     }) => {
       const { id, ...fields } = update
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('profiles') as any)
+      const { error } = await supabase
+        .from('profiles')
         .update(fields)
         .eq('id', id)
       if (error) throw error

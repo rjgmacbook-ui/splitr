@@ -1,12 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { queryKeys } from '@/lib/queryKeys'
-import type { Profile } from '@/types/database'
+import type { Group, GroupMember, GroupBalance, GroupInvite, Profile } from '@/types/database'
+
+export type MemberWithProfile = GroupMember & { profile: Profile }
 
 export function useGroups() {
   return useQuery({
     queryKey: queryKeys.groups.all,
-    queryFn: async () => {
+    queryFn: async (): Promise<Group[]> => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
@@ -16,7 +18,7 @@ export function useGroups() {
         .eq('user_id', user.id)
       if (mErr) throw mErr
 
-      const groupIds = memberships.map((m) => m.group_id)
+      const groupIds = (memberships as Pick<GroupMember, 'group_id'>[]).map((m) => m.group_id)
       if (groupIds.length === 0) return []
 
       const { data, error } = await supabase
@@ -26,7 +28,7 @@ export function useGroups() {
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
       if (error) throw error
-      return data
+      return data as Group[]
     },
   })
 }
@@ -34,7 +36,7 @@ export function useGroups() {
 export function useGroup(id: string | undefined) {
   return useQuery({
     queryKey: queryKeys.groups.detail(id ?? ''),
-    queryFn: async () => {
+    queryFn: async (): Promise<Group> => {
       const { data, error } = await supabase
         .from('groups')
         .select('*')
@@ -42,39 +44,34 @@ export function useGroup(id: string | undefined) {
         .is('deleted_at', null)
         .single()
       if (error) throw error
-      return data
+      return data as Group
     },
     enabled: !!id,
   })
 }
 
-export type MemberWithProfile = {
-  group_id: string
-  user_id: string
-  role: 'admin' | 'member'
-  joined_at: string
-  profile: Profile
-}
-
 export function useGroupMembers(groupId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.groups.members(groupId ?? ''),
-    queryFn: async () => {
+    queryFn: async (): Promise<MemberWithProfile[]> => {
       const { data, error } = await supabase
         .from('group_members')
         .select('group_id, user_id, role, joined_at')
         .eq('group_id', groupId!)
       if (error) throw error
+      const members = data as GroupMember[]
 
-      const userIds = data.map((m) => m.user_id)
+      const userIds = members.map((m) => m.user_id)
+      if (userIds.length === 0) return []
+
       const { data: profiles, error: pErr } = await supabase
         .from('profiles')
         .select('*')
         .in('id', userIds)
       if (pErr) throw pErr
 
-      const profileMap = new Map(profiles.map((p) => [p.id, p]))
-      return data.map((m) => ({
+      const profileMap = new Map((profiles as Profile[]).map((p) => [p.id, p]))
+      return members.map((m) => ({
         ...m,
         profile: profileMap.get(m.user_id) ?? {
           id: m.user_id,
@@ -84,7 +81,7 @@ export function useGroupMembers(groupId: string | undefined) {
           default_currency: 'INR',
           created_at: '',
         },
-      })) as MemberWithProfile[]
+      }))
     },
     enabled: !!groupId,
   })
@@ -93,13 +90,13 @@ export function useGroupMembers(groupId: string | undefined) {
 export function useGroupBalances(groupId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.groups.balances(groupId ?? ''),
-    queryFn: async () => {
+    queryFn: async (): Promise<GroupBalance[]> => {
       const { data, error } = await supabase
         .from('group_balances')
         .select('*')
         .eq('group_id', groupId!)
       if (error) throw error
-      return data
+      return data as GroupBalance[]
     },
     enabled: !!groupId,
   })
@@ -108,7 +105,7 @@ export function useGroupBalances(groupId: string | undefined) {
 export function useAllBalances() {
   return useQuery({
     queryKey: queryKeys.dashboard.balances,
-    queryFn: async () => {
+    queryFn: async (): Promise<GroupBalance[]> => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
@@ -118,7 +115,7 @@ export function useAllBalances() {
         .eq('user_id', user.id)
       if (mErr) throw mErr
 
-      const groupIds = memberships.map((m) => m.group_id)
+      const groupIds = (memberships as Pick<GroupMember, 'group_id'>[]).map((m) => m.group_id)
       if (groupIds.length === 0) return []
 
       const { data, error } = await supabase
@@ -126,7 +123,7 @@ export function useAllBalances() {
         .select('*')
         .in('group_id', groupIds)
       if (error) throw error
-      return data
+      return data as GroupBalance[]
     },
   })
 }
@@ -134,7 +131,7 @@ export function useAllBalances() {
 export function useAllMembers() {
   return useQuery({
     queryKey: ['all-members'],
-    queryFn: async () => {
+    queryFn: async (): Promise<MemberWithProfile[]> => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
@@ -144,7 +141,7 @@ export function useAllMembers() {
         .eq('user_id', user.id)
       if (mErr) throw mErr
 
-      const groupIds = memberships.map((m) => m.group_id)
+      const groupIds = (memberships as Pick<GroupMember, 'group_id'>[]).map((m) => m.group_id)
       if (groupIds.length === 0) return []
 
       const { data, error } = await supabase
@@ -152,16 +149,17 @@ export function useAllMembers() {
         .select('group_id, user_id, role, joined_at')
         .in('group_id', groupIds)
       if (error) throw error
+      const members = data as GroupMember[]
 
-      const userIds = [...new Set(data.map((m) => m.user_id))]
+      const userIds = [...new Set(members.map((m) => m.user_id))]
       const { data: profiles, error: pErr } = await supabase
         .from('profiles')
         .select('*')
         .in('id', userIds)
       if (pErr) throw pErr
 
-      const profileMap = new Map(profiles.map((p) => [p.id, p]))
-      return data.map((m) => ({
+      const profileMap = new Map((profiles as Profile[]).map((p) => [p.id, p]))
+      return members.map((m) => ({
         ...m,
         profile: profileMap.get(m.user_id) ?? {
           id: m.user_id,
@@ -171,7 +169,7 @@ export function useAllMembers() {
           default_currency: 'INR',
           created_at: '',
         },
-      })) as MemberWithProfile[]
+      }))
     },
   })
 }
@@ -191,7 +189,7 @@ export function useCreateGroup() {
         .insert({
           id: groupId,
           name: input.name,
-          type: input.type as 'trip' | 'home' | 'couple' | 'other',
+          type: input.type,
           icon: input.icon || null,
           created_by: user.id,
         })
@@ -221,7 +219,8 @@ export function useUpdateGroup() {
       icon?: string | null
     }) => {
       const { id, ...fields } = input
-      const { error } = await (supabase.from('groups') as any)
+      const { error } = await supabase
+        .from('groups')
         .update(fields)
         .eq('id', id)
       if (error) throw error
@@ -238,7 +237,8 @@ export function useDeleteGroup() {
 
   return useMutation({
     mutationFn: async (groupId: string) => {
-      const { error } = await (supabase.from('groups') as any)
+      const { error } = await supabase
+        .from('groups')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', groupId)
       if (error) throw error
@@ -294,7 +294,7 @@ export function useCreateInvite() {
 export function useGroupInvite(groupId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.groups.invites(groupId ?? ''),
-    queryFn: async () => {
+    queryFn: async (): Promise<GroupInvite | null> => {
       const { data, error } = await supabase
         .from('group_invites')
         .select('*')
@@ -305,7 +305,7 @@ export function useGroupInvite(groupId: string | undefined) {
         .limit(1)
         .maybeSingle()
       if (error) throw error
-      return data
+      return data as GroupInvite | null
     },
     enabled: !!groupId,
   })
@@ -318,7 +318,7 @@ export function useJoinGroup() {
     mutationFn: async (token: string) => {
       const { data, error } = await supabase.rpc('join_group', { invite_token: token })
       if (error) throw error
-      return data as unknown as { group_id: string; already_member: boolean }
+      return data as { group_id: string; already_member: boolean }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.groups.all })
@@ -332,7 +332,7 @@ export function useInviteInfo(token: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_invite_info', { invite_token: token! })
       if (error) throw error
-      return data as unknown as {
+      return data as {
         valid: boolean
         reason?: string
         group_name?: string

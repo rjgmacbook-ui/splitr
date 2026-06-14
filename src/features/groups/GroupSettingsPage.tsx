@@ -107,7 +107,7 @@ export function GroupSettingsPage() {
 
   function handleNameBlur() {
     const trimmed = groupName.trim()
-    if (id && trimmed && trimmed !== group.name) {
+    if (id && group && trimmed && trimmed !== group.name) {
       updateGroup.mutate({ id, name: trimmed })
     }
   }

@@ -11,7 +11,7 @@ export type ExpenseWithDetails = Expense & {
 export function useGroupExpenses(groupId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.expenses.byGroup(groupId ?? ''),
-    queryFn: async () => {
+    queryFn: async (): Promise<ExpenseWithDetails[]> => {
       const { data: expenses, error } = await supabase
         .from('expenses')
         .select('*')
@@ -20,9 +20,10 @@ export function useGroupExpenses(groupId: string | undefined) {
         .order('created_at', { ascending: false })
       if (error) throw error
 
-      if (expenses.length === 0) return []
+      const expenseList = expenses as Expense[]
+      if (expenseList.length === 0) return []
 
-      const expenseIds = expenses.map((e) => e.id)
+      const expenseIds = expenseList.map((e) => e.id)
 
       const [payersRes, sharesRes] = await Promise.all([
         supabase.from('expense_payers').select('*').in('expense_id', expenseIds),
@@ -32,24 +33,24 @@ export function useGroupExpenses(groupId: string | undefined) {
       if (sharesRes.error) throw sharesRes.error
 
       const payerMap = new Map<string, ExpensePayer[]>()
-      for (const p of payersRes.data) {
+      for (const p of payersRes.data as ExpensePayer[]) {
         const arr = payerMap.get(p.expense_id) ?? []
         arr.push(p)
         payerMap.set(p.expense_id, arr)
       }
 
       const shareMap = new Map<string, ExpenseShare[]>()
-      for (const s of sharesRes.data) {
+      for (const s of sharesRes.data as ExpenseShare[]) {
         const arr = shareMap.get(s.expense_id) ?? []
         arr.push(s)
         shareMap.set(s.expense_id, arr)
       }
 
-      return expenses.map((e) => ({
+      return expenseList.map((e) => ({
         ...e,
         payers: payerMap.get(e.id) ?? [],
         shares: shareMap.get(e.id) ?? [],
-      })) as ExpenseWithDetails[]
+      }))
     },
     enabled: !!groupId,
   })
@@ -58,7 +59,7 @@ export function useGroupExpenses(groupId: string | undefined) {
 export function useExpense(id: string | undefined) {
   return useQuery({
     queryKey: queryKeys.expenses.detail(id ?? ''),
-    queryFn: async () => {
+    queryFn: async (): Promise<ExpenseWithDetails> => {
       const { data: expense, error } = await supabase
         .from('expenses')
         .select('*')
@@ -75,10 +76,10 @@ export function useExpense(id: string | undefined) {
       if (sharesRes.error) throw sharesRes.error
 
       return {
-        ...expense,
-        payers: payersRes.data,
-        shares: sharesRes.data,
-      } as ExpenseWithDetails
+        ...(expense as Expense),
+        payers: payersRes.data as ExpensePayer[],
+        shares: sharesRes.data as ExpenseShare[],
+      }
     },
     enabled: !!id,
   })
@@ -88,7 +89,7 @@ export function useProfiles(userIds: string[]) {
   const sorted = [...new Set(userIds)].sort()
   return useQuery({
     queryKey: queryKeys.profiles.byIds(sorted),
-    queryFn: async () => {
+    queryFn: async (): Promise<Profile[]> => {
       if (sorted.length === 0) return []
       const { data, error } = await supabase
         .from('profiles')
@@ -107,10 +108,10 @@ export function useCreateExpense() {
   return useMutation({
     mutationFn: async (payload: CreateExpensePayload) => {
       const { data, error } = await supabase.rpc('create_expense', {
-        payload: payload as any,
+        payload: payload as unknown,
       })
       if (error) throw error
-      return data as unknown as string
+      return data as string
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.expenses.byGroup(variables.group_id) })
@@ -125,7 +126,8 @@ export function useDeleteExpense() {
 
   return useMutation({
     mutationFn: async (expense: { id: string; group_id: string }) => {
-      const { error } = await (supabase.from('expenses') as any)
+      const { error } = await supabase
+        .from('expenses')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', expense.id)
       if (error) throw error
@@ -159,7 +161,7 @@ export function useRecordPayment() {
         shares: [{ user_id: input.to_user_id, owed_minor: input.amount_minor }],
       }
       const { data, error } = await supabase.rpc('create_expense', {
-        payload: payload as any,
+        payload: payload as unknown,
       })
       if (error) throw error
       return data
