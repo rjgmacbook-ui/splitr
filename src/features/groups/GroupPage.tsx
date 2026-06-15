@@ -11,7 +11,8 @@ import { getCategoryIcon, CATEGORIES } from '@/lib/categories'
 import type { Profile } from '@/types/database'
 
 function toDateKey(dateStr: string): string {
-  return new Date(dateStr).toISOString().slice(0, 10)
+  const d = new Date(dateStr)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 function formatDate(dateStr: string): string {

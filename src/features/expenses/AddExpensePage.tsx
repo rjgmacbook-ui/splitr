@@ -234,7 +234,7 @@ export function AddExpensePage() {
       amount_minor: amountMinor,
       currency: 'INR',
       category,
-      expense_date: date,
+      expense_date: new Date(date).toISOString(),
       notes: notes.trim() || null,
       is_payment: false,
       payers: payerList.filter((p) => p.paid_minor > 0),

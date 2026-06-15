@@ -188,6 +188,11 @@ export function LoginPage() {
                 : mode === 'signin' ? 'Sign in' : 'Create account'
               }
             </button>
+            {mode === 'signup' && (
+              <p className="text-ink-secondary/60 text-xs text-center mt-1">
+                No email verification needed — you'll be signed in instantly.
+              </p>
+            )}
           </form>
 
         </div>
