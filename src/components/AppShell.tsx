@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useGroups } from '@/hooks/useGroups'
 
 function HomeIcon({ active }: { active: boolean }) {
   return (
@@ -61,6 +62,8 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const navigate = useNavigate()
+  const { data: groups = [] } = useGroups()
+  const hasGroups = groups.length > 0
 
   return (
     <div className="min-h-dvh bg-bg flex flex-col md:flex-row">
@@ -97,19 +100,21 @@ export function AppShell({ children }: AppShellProps) {
           ))}
         </nav>
 
-        <div className="mt-auto px-4 pb-5">
-          <button
-            onClick={() => navigate('/expenses/new')}
-            className="w-full flex items-center justify-center gap-2 h-12 bg-primary text-on-primary
-                       rounded-pill text-[15px] font-semibold
-                       hover:bg-primary-hover active:scale-[0.97] transition-all
-                       focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            aria-label="Add expense"
-          >
-            <PlusIcon />
-            Add expense
-          </button>
-        </div>
+        {hasGroups && (
+          <div className="mt-auto px-4 pb-5">
+            <button
+              onClick={() => navigate('/expenses/new')}
+              className="w-full flex items-center justify-center gap-2 h-12 bg-primary text-on-primary
+                         rounded-pill text-[15px] font-semibold
+                         hover:bg-primary-hover active:scale-[0.97] transition-all
+                         focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              aria-label="Add expense"
+            >
+              <PlusIcon />
+              Add expense
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* ── Main content ── */}
@@ -120,18 +125,20 @@ export function AppShell({ children }: AppShellProps) {
       </main>
 
       {/* ── Mobile FAB ── */}
-      <button
-        onClick={() => navigate('/expenses/new')}
-        className="md:hidden fixed z-30 right-4 bottom-[calc(68px+env(safe-area-inset-bottom)+12px)]
-                   flex items-center gap-1.5 h-12 px-5 bg-primary text-on-primary
-                   rounded-pill text-sm font-semibold shadow-[0_2px_12px_rgba(108,92,231,0.35)]
-                   hover:bg-primary-hover active:scale-[0.95] transition-all
-                   focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        aria-label="Add expense"
-      >
-        <PlusIcon />
-        <span>Add</span>
-      </button>
+      {hasGroups && (
+        <button
+          onClick={() => navigate('/expenses/new')}
+          className="md:hidden fixed z-30 right-4 bottom-[calc(68px+env(safe-area-inset-bottom)+12px)]
+                     flex items-center gap-1.5 h-12 px-5 bg-primary text-on-primary
+                     rounded-pill text-sm font-semibold shadow-[0_2px_12px_rgba(108,92,231,0.35)]
+                     hover:bg-primary-hover active:scale-[0.95] transition-all
+                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          aria-label="Add expense"
+        >
+          <PlusIcon />
+          <span>Add</span>
+        </button>
+      )}
 
       {/* ── Mobile bottom nav ── */}
       <nav
