@@ -42,6 +42,7 @@ export function LoginPage() {
   const [displayName, setDisplayName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [signupDone, setSignupDone] = useState(false)
 
   const { signInWithEmail, signUpWithEmail } = useAuth()
   const navigate = useNavigate()
@@ -52,6 +53,7 @@ export function LoginPage() {
   function switchMode(next: Mode) {
     setMode(next)
     setError(null)
+    setSignupDone(false)
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -71,10 +73,11 @@ export function LoginPage() {
     try {
       if (mode === 'signin') {
         await signInWithEmail(email, password)
+        navigate(from, { replace: true })
       } else {
         await signUpWithEmail(email, password, displayName)
+        setSignupDone(true)
       }
-      navigate(from, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -108,93 +111,120 @@ export function LoginPage() {
 
         {/* ── Card ── */}
         <div className="bg-surface border border-border rounded-sheet p-6">
-          {/* ── Mode toggle ── */}
-          <div className="flex bg-bg rounded-pill p-1 mb-6">
-            <button
-              type="button"
-              onClick={() => switchMode('signin')}
-              className={`flex-1 h-10 rounded-pill text-sm font-semibold transition-all
-                ${mode === 'signin'
-                  ? 'bg-primary text-on-primary shadow-[0_1px_4px_rgba(108,92,231,0.25)]'
-                  : 'text-ink-secondary hover:text-ink'
-                }`}
-            >
-              Sign in
-            </button>
-            <button
-              type="button"
-              onClick={() => switchMode('signup')}
-              className={`flex-1 h-10 rounded-pill text-sm font-semibold transition-all
-                ${mode === 'signup'
-                  ? 'bg-primary text-on-primary shadow-[0_1px_4px_rgba(108,92,231,0.25)]'
-                  : 'text-ink-secondary hover:text-ink'
-                }`}
-            >
-              Sign up
-            </button>
-          </div>
-
-          {/* ── Form ── */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
-            {mode === 'signup' && (
-              <input
-                type="text"
-                placeholder="Your name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                autoComplete="name"
-                className="h-12 px-4 rounded-md border border-border bg-surface text-ink
-                           placeholder:text-ink-secondary text-[15px]
-                           focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                           transition-shadow"
-              />
-            )}
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              className="h-12 px-4 rounded-md border border-border bg-surface text-ink
-                         placeholder:text-ink-secondary text-[15px]
-                         focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                         transition-shadow"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-              className="h-12 px-4 rounded-md border border-border bg-surface text-ink
-                         placeholder:text-ink-secondary text-[15px]
-                         focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                         transition-shadow"
-            />
-
-            {error && (
-              <p className="text-negative text-sm px-1" role="alert">{error}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="h-12 bg-primary text-on-primary rounded-pill text-[15px] font-semibold
-                         hover:bg-primary-hover active:scale-[0.97] transition-all
-                         disabled:opacity-60 disabled:pointer-events-none mt-1"
-            >
-              {submitting
-                ? mode === 'signin' ? 'Signing in…' : 'Creating account…'
-                : mode === 'signin' ? 'Sign in' : 'Create account'
-              }
-            </button>
-            {mode === 'signup' && (
-              <p className="text-ink-secondary/60 text-xs text-center mt-1">
-                No email verification needed — you'll be signed in instantly.
+          {signupDone ? (
+            <div className="text-center py-4">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M22 4L12 13 2 4" />
+                </svg>
+              </div>
+              <h2 className="font-display text-xl font-semibold text-ink mb-2">
+                Check your email
+              </h2>
+              <p className="text-ink-secondary text-[15px] leading-relaxed mb-1">
+                We sent a confirmation link to
               </p>
-            )}
-          </form>
+              <p className="text-ink font-medium text-[15px] mb-6">
+                {email}
+              </p>
+              <p className="text-ink-secondary text-sm leading-relaxed mb-6">
+                Click the link in the email to activate your account, then come back here to sign in.
+              </p>
+              <button
+                type="button"
+                onClick={() => switchMode('signin')}
+                className="h-12 w-full bg-primary text-on-primary rounded-pill text-[15px] font-semibold
+                           hover:bg-primary-hover active:scale-[0.97] transition-all"
+              >
+                Go to sign in
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* ── Mode toggle ── */}
+              <div className="flex bg-bg rounded-pill p-1 mb-6">
+                <button
+                  type="button"
+                  onClick={() => switchMode('signin')}
+                  className={`flex-1 h-10 rounded-pill text-sm font-semibold transition-all
+                    ${mode === 'signin'
+                      ? 'bg-primary text-on-primary shadow-[0_1px_4px_rgba(108,92,231,0.25)]'
+                      : 'text-ink-secondary hover:text-ink'
+                    }`}
+                >
+                  Sign in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchMode('signup')}
+                  className={`flex-1 h-10 rounded-pill text-sm font-semibold transition-all
+                    ${mode === 'signup'
+                      ? 'bg-primary text-on-primary shadow-[0_1px_4px_rgba(108,92,231,0.25)]'
+                      : 'text-ink-secondary hover:text-ink'
+                    }`}
+                >
+                  Sign up
+                </button>
+              </div>
 
+              {/* ── Form ── */}
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
+                {mode === 'signup' && (
+                  <input
+                    type="text"
+                    placeholder="Your name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    autoComplete="name"
+                    className="h-12 px-4 rounded-md border border-border bg-surface text-ink
+                               placeholder:text-ink-secondary text-[15px]
+                               focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+                               transition-shadow"
+                  />
+                )}
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  className="h-12 px-4 rounded-md border border-border bg-surface text-ink
+                             placeholder:text-ink-secondary text-[15px]
+                             focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+                             transition-shadow"
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                  className="h-12 px-4 rounded-md border border-border bg-surface text-ink
+                             placeholder:text-ink-secondary text-[15px]
+                             focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+                             transition-shadow"
+                />
+
+                {error && (
+                  <p className="text-negative text-sm px-1" role="alert">{error}</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="h-12 bg-primary text-on-primary rounded-pill text-[15px] font-semibold
+                             hover:bg-primary-hover active:scale-[0.97] transition-all
+                             disabled:opacity-60 disabled:pointer-events-none mt-1"
+                >
+                  {submitting
+                    ? mode === 'signin' ? 'Signing in…' : 'Creating account…'
+                    : mode === 'signin' ? 'Sign in' : 'Create account'
+                  }
+                </button>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </div>
